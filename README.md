@@ -36,8 +36,7 @@ AI Resolution   Human Escalation
     Support Data Logging
             ↓
      Analytics Dashboard
-
-
+```
 ## ✨ Key Features
 
 - Customer support request intake through n8n
