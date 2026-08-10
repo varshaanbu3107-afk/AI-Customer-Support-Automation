@@ -16,6 +16,7 @@ Support activity is also recorded and visualized through an analytics dashboard.
 
 ## 🔄 Workflow
 
+```text
 Customer Support Request
           ↓
       n8n Webhook
@@ -35,6 +36,8 @@ AI Resolution   Human Escalation
     Support Data Logging
             ↓
      Analytics Dashboard
+
+
 ## ✨ Key Features
 
 - Customer support request intake through n8n
