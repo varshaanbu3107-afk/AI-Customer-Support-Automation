@@ -1,0 +1,776 @@
+{
+  "name": "AI Customer Support & ticket Escalation System",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Your request has been forwarded to our support team. A representative will review your request and assist you shortly.",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1664,
+        -144
+      ],
+      "id": "46caaff5-2f48-4acc-aee0-f2a2490fcd1d",
+      "name": "Respond - Human Support"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{$node[\"AI Support Response\"].json[\"output\"]}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1568,
+        -768
+      ],
+      "id": "90bcf1f4-6042-49dd-921b-ed6507531d5d",
+      "name": "Respond - AI Resolution"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f29b276-09bf-4106-9b6e-829646b4ea0c",
+              "name": "Customer Name",
+              "value": "={{$json.body.name}}",
+              "type": "string"
+            },
+            {
+              "id": "032a3d11-5b69-4ad5-9d92-a80acc4c72bf",
+              "name": "Customer Email",
+              "value": "={{$json.body.email}}",
+              "type": "string"
+            },
+            {
+              "id": "290eb90d-a8b5-4793-b4f7-9651e7d7fe2a",
+              "name": "Message",
+              "value": "={{$json.body.message}}",
+              "type": "string"
+            },
+            {
+              "id": "0247896a-e344-4e49-ac71-7c03c820a9e1",
+              "name": "Order ID",
+              "value": "={{$json.body.order_id}}",
+              "type": "string"
+            },
+            {
+              "id": "d0cc784c-d121-475e-b7df-1562c605b6b2",
+              "name": "Timestamp",
+              "value": "={{$now}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        288,
+        -192
+      ],
+      "id": "2fd62230-41b4-4cc6-8012-39a65e83ec11",
+      "name": "Extract Customer Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$node[\"Extract Customer Data\"].json[\"Message\"]}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI customer support classifier for an online store.\n\nYour job is to analyze every customer support request and accurately classify it.\n\nCATEGORY RULES:\n\n- Billing & Payments: charges, duplicate charges, refunds, payments, invoices, payment problems\n- Order & Delivery: order status, shipping, tracking, delayed delivery, missing package\n- Cancellation: cancelling an order or requesting cancellation\n- Account & Login: login, password, account access, profile problems, locked accounts\n- Technical Issue: website, app, technical errors, bugs, checkout errors\n- General Inquiry: general questions that do not fit the above categories\n\n\nPRIORITY RULES:\n\n- High: payment problems, duplicate charges, refund disputes, account security, locked accounts, serious complaints\n- Medium: delayed orders, delivery issues, cancellation requests, technical problems\n- Low: general questions, information requests, non-urgent requests\n\n\nSENTIMENT RULES:\n\n- Positive: happy, satisfied, thankful or complimentary\n- Neutral: simple factual question with no strong emotion\n- Negative: complaint, frustration, anger, dissatisfaction or financial dispute\n\n\nHUMAN ESCALATION RULES:\n\nSet human_required to true when:\n\n- The customer requests a refund\n- The customer reports being charged incorrectly or multiple times\n- The customer has a payment dispute\n- The customer reports account or security problems\n- The customer is highly frustrated or angry\n- The issue requires an action that the AI cannot actually perform\n- The customer explicitly asks to speak with a human\n- The customer requests an order cancellation that the AI cannot actually perform\n- The customer has a technical issue that requires action or investigation that the AI cannot perform\n\nSet human_required to false for simple questions that can be answered without human intervention.\n\n\nSUMMARY RULES:\n\nThe summary must ONLY describe the customer's issue or request.\n\nThe summary must:\n\n- Describe what the customer reported or requested\n- Be concise and factual\n- Be written in third person\n- Focus only on the customer's issue or request\n\nThe summary must NOT:\n\n- Apologize\n- Provide a solution\n- Give advice\n- Mention a support team or representative\n- Mention escalation\n- Mention investigation\n- Mention being flagged or forwarded\n- Claim that any action was taken\n- Claim that a refund was issued\n- Claim that an order was cancelled\n- Claim that an issue was resolved\n- Be written as a customer-facing response\n\n\nSUMMARY EXAMPLES:\n\nCustomer message:\n\"I was charged twice for my order and I need a refund.\"\n\nCorrect summary:\n\"The customer reports being charged twice for an order and requests a refund.\"\n\nCustomer message:\n\"The website is showing an error when I try to place my order.\"\n\nCorrect summary:\n\"The customer reports a website error when attempting to place an order.\"\n\nCustomer message:\n\"My account has been locked and I urgently need help accessing it.\"\n\nCorrect summary:\n\"The customer reports that their account is locked and requests help accessing it.\"\n\nCustomer message:\n\"What are your customer support hours?\"\n\nCorrect summary:\n\"The customer is asking about customer support hours.\"\n\n\nCUSTOMER-FACING RESPONSE RULES:\n\nIf a customer-facing response is generated elsewhere in the workflow:\n\n- Be polite, professional and concise.\n- Do not promise refunds, cancellations or actions that cannot actually be performed.\n- Do not claim that an action has been completed when it has not.\n- If human assistance is required, clearly state that a support representative will assist the customer.\n- Do not claim that the request has already been escalated, assigned, investigated or resolved.\n\n\nIMPORTANT:\n\nKeep classification and summary separate from the customer-facing response.\n\nThe summary is an internal description of the customer's issue.\nDo not write the customer-facing response inside the summary.\n\nReturn the requested structured output accurately."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        528,
+        -96
+      ],
+      "id": "ca0e9031-5feb-4ae6-8dcc-46049f5b7a12",
+      "name": "AI Support Classifier"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "customer-support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        -192
+      ],
+      "id": "d54abca6-b464-4cf5-9986-4daaa611399f",
+      "name": "Customer Support Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        112
+      ],
+      "id": "0a5294db-013b-4524-bf7d-4a0764a7b9b0",
+      "name": "Gemini Support Model"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"category\": \"Billing and Payments\",\n  \"priority\": \"High\",\n  \"sentiment\": \"Negative\",\n  \"human_required\": true,\n  \"summary\": \"Customer reports a duplicate charge and requests a refund.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        160
+      ],
+      "id": "c95027d2-b751-453e-bfa4-b29974db0d0e",
+      "name": "Support Classification Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "91f2bede-257b-480f-b676-3825a3708e97",
+              "name": "Category",
+              "value": "={{$json.output.category}}",
+              "type": "string"
+            },
+            {
+              "id": "4d59f082-b1ed-437b-ab26-8b7ee5eb5ecb",
+              "name": "Priority",
+              "value": "={{$json.output.priority}}",
+              "type": "string"
+            },
+            {
+              "id": "6e7bbc26-e6ce-472d-822f-05d375531865",
+              "name": "Sentiment",
+              "value": "={{$json.output.sentiment}}",
+              "type": "string"
+            },
+            {
+              "id": "ddafbd73-df87-47fc-a89b-cf9310c525ca",
+              "name": "Human Required",
+              "value": "={{$json.output.human_required}}",
+              "type": "boolean"
+            },
+            {
+              "id": "d05b86d6-be2b-4722-860f-588f1dd97e94",
+              "name": "Summary",
+              "value": "={{$json.output.summary}}",
+              "type": "string"
+            },
+            {
+              "id": "9120ff34-9c49-4b7b-a0c4-0ed738a0bc52",
+              "name": "Timestamp",
+              "value": "={{$node[\"Extract Customer Data\"].json[\"Timestamp\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "ee2ca3e8-ae64-47f3-8a08-78e84e6e69c4",
+              "name": "Customer Name",
+              "value": "={{$node[\"Extract Customer Data\"].json[\"Customer Name\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "4287a125-500c-4cf5-a9f0-9dbb133db5b4",
+              "name": "Customer Email",
+              "value": "={{$node[\"Extract Customer Data\"].json[\"Customer Email\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "7213d9b8-9240-45db-aed2-cd12703678ed",
+              "name": "Order ID",
+              "value": "={{$node[\"Extract Customer Data\"].json[\"Order ID\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "e1f021c3-6fd2-4f55-9f31-c9a94352169a",
+              "name": "Message",
+              "value": "={{$node[\"Extract Customer Data\"].json[\"Message\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1232,
+        288
+      ],
+      "id": "2eecceb9-e8c6-41d6-b965-96d103a3685c",
+      "name": "Prepare Support Log"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7a94a5d9-bf84-4dbf-ad99-7d524729b353",
+                    "leftValue": "={{$json[\"Human Required\"]}}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Human Escalation"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d0beab21-dc0e-4ae6-aebe-a931c352187a",
+                    "leftValue": "={{$json[\"Human Required\"]}}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "AI Resolution"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        -192
+      ],
+      "id": "389e44cb-1a4d-4ce8-b644-45cbef46bfba",
+      "name": "Route Support Request"
+    },
+    {
+      "parameters": {
+        "fromEmail": "YOUR_EMAIL@example.com",
+        "toEmail": "YOUR_EMAIL@example.com",
+        "subject": "=Human Support Required - {{$node[\"Prepare Support Log\"].json[\"Category\"]}}",
+        "emailFormat": "text",
+        "text": "=A customer support request requires human assistance.\n\nCustomer Name: {{$node[\"Prepare Support Log\"].json[\"Customer Name\"]}}\nCustomer Email: {{$node[\"Prepare Support Log\"].json[\"Customer Email\"]}}\nOrder ID: {{$node[\"Prepare Support Log\"].json[\"Order ID\"]}}\n\nCategory: {{$node[\"Prepare Support Log\"].json[\"Category\"]}}\nPriority: {{$node[\"Prepare Support Log\"].json[\"Priority\"]}}\nSentiment: {{$node[\"Prepare Support Log\"].json[\"Sentiment\"]}}\nHuman Required: {{$node[\"Prepare Support Log\"].json[\"Human Required\"]}}\n\nAI Summary:\n{{$node[\"Prepare Support Log\"].json[\"Summary\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1216,
+        -144
+      ],
+      "id": "9a4cdbdb-2575-4630-aeee-dd7237ccb956",
+      "name": "Send Human Escalation Email"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$node[\"Extract Customer Data\"].json[\"Message\"]}}",
+        "options": {
+          "systemMessage": "You are an AI customer support assistant.\n\nRespond directly to the customer's support request.\n\nBe polite, professional, and concise.\n\nDo not promise refunds, cancellations, or actions that you cannot actually perform.\n\nIf the customer needs human assistance, explain that a support representative will help them."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1008,
+        -768
+      ],
+      "id": "cd34d67f-5ab0-4035-a46a-a43b9a1a57f4",
+      "name": "AI Support Response"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AI_Customer_Support_Logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$node[\"Prepare Support Log\"].json[\"Timestamp\"]}}",
+            "Customer Name": "={{$node[\"Prepare Support Log\"].json[\"Customer Name\"]}}",
+            "Customer Email": "={{$node[\"Prepare Support Log\"].json[\"Customer Email\"]}}",
+            "Order ID": "={{$node[\"Prepare Support Log\"].json[\"Order ID\"]}}",
+            "Message": "={{$node[\"Prepare Support Log\"].json[\"Message\"]}}",
+            "Category": "={{$node[\"Prepare Support Log\"].json[\"Category\"]}}",
+            "Priority": "={{$node[\"Prepare Support Log\"].json[\"Priority\"]}}",
+            "Sentiment": "={{$node[\"Prepare Support Log\"].json[\"Sentiment\"]}}",
+            "Human Required": "={{$node[\"Prepare Support Log\"].json[\"Human Required\"]}}",
+            "Summary": "={{$node[\"Prepare Support Log\"].json[\"Summary\"]}}",
+            "Resolution Type": "Human Escalation",
+            "Status": "Pending Human Review"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Human Required",
+              "displayName": "Human Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resolution Type",
+              "displayName": "Resolution Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1424,
+        -144
+      ],
+      "id": "487e05a6-697f-4b32-9d7c-550ba62dac09",
+      "name": "Log Human Escalation"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "AI_Customer_Support_Logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$node[\"Prepare Support Log\"].json[\"Timestamp\"]}}",
+            "Customer Name": "={{$node[\"Prepare Support Log\"].json[\"Customer Name\"]}}",
+            "Customer Email": "={{$node[\"Prepare Support Log\"].json[\"Customer Email\"]}}",
+            "Order ID": "={{$node[\"Prepare Support Log\"].json[\"Order ID\"]}}",
+            "Message": "={{$node[\"Prepare Support Log\"].json[\"Message\"]}}",
+            "Category": "={{$node[\"Prepare Support Log\"].json[\"Category\"]}}",
+            "Priority": "={{$node[\"Prepare Support Log\"].json[\"Priority\"]}}",
+            "Sentiment": "={{$node[\"Prepare Support Log\"].json[\"Sentiment\"]}}",
+            "Human Required": "={{$node[\"Prepare Support Log\"].json[\"Human Required\"]}}",
+            "Summary": "={{$node[\"Prepare Support Log\"].json[\"Summary\"]}}",
+            "Resolution Type": "AI Resolution",
+            "Status": "Resolved"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Human Required",
+              "displayName": "Human Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resolution Type",
+              "displayName": "Resolution Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1360,
+        -768
+      ],
+      "id": "e9afc226-4369-4c87-9610-42be2fbb2d22",
+      "name": "Log AI Resolution"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract Customer Data": {
+      "main": [
+        [
+          {
+            "node": "AI Support Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Support Classifier": {
+      "main": [
+        [
+          {
+            "node": "Prepare Support Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Support Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Support Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Support Response",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Support Classification Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Support Classifier",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Support Log": {
+      "main": [
+        [
+          {
+            "node": "Route Support Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Support Request": {
+      "main": [
+        [
+          {
+            "node": "Send Human Escalation Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Support Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Human Escalation Email": {
+      "main": [
+        [
+          {
+            "node": "Log Human Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Support Response": {
+      "main": [
+        [
+          {
+            "node": "Log AI Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Human Escalation": {
+      "main": [
+        [
+          {
+            "node": "Respond - Human Support",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Resolution": {
+      "main": [
+        [
+          {
+            "node": "Respond - AI Resolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}
