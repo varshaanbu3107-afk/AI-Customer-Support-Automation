@@ -65,8 +65,6 @@ The dashboard provides insights into:
 
 ## 🛠️ Technologies Used
 
-## 🛠️ Technologies Used
-
 - **n8n** — Workflow automation
 - **AI Agent / LLM** — Customer request analysis, classification, and resolution
 - **Google Sheets** — Support data logging
